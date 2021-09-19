@@ -1,0 +1,69 @@
+<html>
+    <head>
+        <title>JS Checkout Demo</title>
+    </head>
+    <body>
+        <div id="paytm-checkoutjs"></div>
+        <script>
+            
+            async function onScriptLoad(){
+
+                var data = await fetch(`http://localhost:5000/api/payment`,{
+                            method:"GET",
+                            headers:{
+                                Accept:"application/json",
+                                "Content-Type":"application/json"
+                            },
+                        }).then(response=>response.json()).catch(err=>console.log(err));
+
+                var Jsondata = JSON.parse(data)      
+                console.log(JSON.parse(data))
+
+                var token = await fetch(`https://securegw-stage.paytm.in/theia/api/v1/initiateTransaction?mid=Muctvj23768431537109&orderId=${Jsondata.body.orderId}`,{
+                            method:"POST",
+                            headers:{
+                                Accept:"application/json",
+                                "Content-Type":"application/json"
+                            },
+                            body:data
+                        }).then(response=>response.json()).catch(err=>console.log(err));
+
+                        console.log(token)
+        var config = {
+                "root": "",
+                "flow": "DEFAULT",
+                "data": {
+                    "orderId": Jsondata.body.orderId, /* update order id */
+                    "token": token, /* update token value */
+                    "tokenType": "TXN_TOKEN",
+                    "amount": "1.00" /* update amount */
+                },
+                "payMode": {
+                        "order": ['CARD']
+                    },
+                "handler": {
+                    "notifyMerchant": function(eventName,data){
+                    console.log("notifyMerchant handler function called");
+                    console.log("eventName => ",eventName);
+                    console.log("data => ",data);
+                    } 
+                }
+        };
+
+                if(window.Paytm && window.Paytm.CheckoutJS){
+                    window.Paytm.CheckoutJS.onLoad(function excecuteAfterCompleteLoad() {
+                        // initialze configuration using init method 
+                        window.Paytm.CheckoutJS.init(config).then(function onSuccess() {
+                            // after successfully updating configuration, invoke JS Checkout
+                            console.log("success")
+                            window.Paytm.CheckoutJS.invoke();
+                        }).catch(function onError(error){
+                            console.log("error => ",error);
+                        });
+                    });
+                }  
+            }   
+        </script>
+        <script type="application/javascript" crossorigin="anonymous" src="https://securegw.paytm.in/merchantpgpui/checkoutjs/merchants/Muctvj23768431537109.js" onload="onScriptLoad();"></script>
+    </body>
+</html>
